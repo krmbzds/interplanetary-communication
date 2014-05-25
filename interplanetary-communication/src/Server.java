@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class Server {
     private DatagramSocket socket = null;
@@ -13,7 +15,7 @@ public class Server {
     private Integer port = Integer.parseInt(cfg.getProperty("port"));
     private Integer realDataSize = Integer.parseInt(cfg.getProperty("realDataSize"));
     private Integer errorCorrSize = Integer.parseInt(cfg.getProperty("errorCorrSize"));
-    private Integer fullChunkSize = realDataSize + errorCorrSize;
+    private Integer corruptionFactor = Integer.parseInt(cfg.getProperty("corruptionFactor"));
 
     public Server() {
 
@@ -22,7 +24,7 @@ public class Server {
     public void createAndListenSocket() {
         try {
             socket = new DatagramSocket(port);
-            byte[] incomingData = new byte[1024 * 128];
+            byte[] incomingData = new byte[1024 * 64];
             while (true) {
                 DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
                 socket.receive(incomingPacket);
@@ -47,6 +49,7 @@ public class Server {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                    System.exit(0);
                 }
 
                 createAndWriteFile();   // writing the file to hard disk
@@ -72,7 +75,9 @@ public class Server {
     }
 
     public void createAndWriteFile() {
-        String outputFile = fileEvent.getDestinationDirectory() + fileEvent.getFilename();
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+
+        String outputFile = fileEvent.getDestinationDirectory() + corruptionFactor + "-" + realDataSize + "-" + errorCorrSize + "-" + timeStamp + "_" + fileEvent.getFilename();
         if (!new File(fileEvent.getDestinationDirectory()).exists()) {
             new File(fileEvent.getDestinationDirectory()).mkdirs();
         }
