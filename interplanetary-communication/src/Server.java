@@ -1,3 +1,5 @@
+import com.google.zxing.common.reedsolomon.Util;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -20,7 +22,7 @@ public class Server {
     public void createAndListenSocket() {
         try {
             socket = new DatagramSocket(port);
-            byte[] incomingData = new byte[1024 * 1000 * 50];
+            byte[] incomingData = new byte[1024 * 128];
             while (true) {
                 DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
                 socket.receive(incomingPacket);
@@ -35,13 +37,18 @@ public class Server {
                 byte[] singleChunk = proxy.mergeChunks(correctedChunk);
 
 
-                ByteArrayInputStream in = new ByteArrayInputStream(singleChunk);
-                ObjectInputStream is = new ObjectInputStream(in);
-                fileEvent = (FileEvent) is.readObject();
-                if (fileEvent.getStatus().equalsIgnoreCase("Error")) {
-                    System.out.println("Some issue happened while packing the data @ client side");
-                    System.exit(0);
+                try {
+                    ByteArrayInputStream in = new ByteArrayInputStream(singleChunk);
+                    ObjectInputStream is = new ObjectInputStream(in);
+                    fileEvent = (FileEvent) is.readObject();
+                    if (fileEvent.getStatus().equalsIgnoreCase("Error")) {
+                        System.out.println("Some issue happened while packing the data @ client side");
+                        System.exit(0);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
                 createAndWriteFile();   // writing the file to hard disk
                 InetAddress IPAddress = incomingPacket.getAddress();
                 int port = incomingPacket.getPort();
@@ -58,8 +65,6 @@ public class Server {
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();

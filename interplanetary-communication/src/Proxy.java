@@ -21,7 +21,7 @@ public class Proxy {
 
         // Divides byte array into smaller chunks
         Integer numberOfChunks = (int) Math.ceil((double) completeChunk.length / realDataSize);
-        padding = (int) completeChunk.length % realDataSize;
+        padding = completeChunk.length % realDataSize;
 
         byte[][] chunks = new byte[numberOfChunks][realDataSize];
         byte[][] encodedChunk = new byte[numberOfChunks][realDataSize];
@@ -67,7 +67,7 @@ public class Proxy {
 
                 if (probability < corruptionFactor) {
                     // Screw with the byte
-                    corruptedChunks[i][j] = (byte)(Integer.MAX_VALUE & 0xFF);
+                    corruptedChunks[i][j] = 0;
                 }
             }
         }
@@ -83,9 +83,9 @@ public class Proxy {
                 // Try to decode the message using FEC algorithm
                 correctedChunk[i] = encoderDecoder.decodeData(corruptChunk[i], errorCorrSize);
             } catch (ReedSolomonException e) {
-                e.printStackTrace();
+                correctedChunk[i] = correctedChunk[i];
             } catch (EncoderDecoder.DataTooLargeException e) {
-                e.printStackTrace();
+                correctedChunk[i] = correctedChunk[i];
             }
         }
         return correctedChunk;
@@ -99,7 +99,7 @@ public class Proxy {
 
         for (int i = 0; i < chunkLength; i++) {
 
-            if ( i != chunkLength - 1) {
+            if ( i != chunkLength - 2) {
                 for (int j = 0; j < correctedChunk[i].length; j++) {
                     singleChunk[i * realDataSize + j] = correctedChunk[i][j];
                 }
