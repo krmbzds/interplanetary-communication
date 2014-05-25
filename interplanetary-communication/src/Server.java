@@ -9,6 +9,9 @@ public class Server {
     private FileEvent fileEvent = null;
     private Config cfg = new Config();
     private Integer port = Integer.parseInt(cfg.getProperty("port"));
+    private Integer realDataSize = Integer.parseInt(cfg.getProperty("realDataSize"));
+    private Integer errorCorrSize = Integer.parseInt(cfg.getProperty("errorCorrSize"));
+    private Integer fullChunkSize = realDataSize + errorCorrSize;
 
     public Server() {
 
@@ -22,7 +25,17 @@ public class Server {
                 DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
                 socket.receive(incomingPacket);
                 byte[] data = incomingPacket.getData();
-                ByteArrayInputStream in = new ByteArrayInputStream(data);
+
+                // Simulate interplanetary communication
+                Proxy proxy = new Proxy();
+
+                byte[][] splitChunk = proxy.splitChunk(data);
+                byte[][] corruptChunk = proxy.corruptChunk(splitChunk);
+                byte[][] correctedChunk = proxy.correctChunk(corruptChunk);
+                byte[] singleChunk = proxy.mergeChunks(correctedChunk);
+
+
+                ByteArrayInputStream in = new ByteArrayInputStream(singleChunk);
                 ObjectInputStream is = new ObjectInputStream(in);
                 fileEvent = (FileEvent) is.readObject();
                 if (fileEvent.getStatus().equalsIgnoreCase("Error")) {
