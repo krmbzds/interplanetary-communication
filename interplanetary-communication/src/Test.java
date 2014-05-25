@@ -74,34 +74,29 @@ public class Test {
     private void runTest() throws InterruptedException {
         Integer times = Integer.parseInt(numTest);
 
+        // Create the server
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Server server = new Server();
+                server.createAndListenSocket();
+            }
+        }).start();
+
+
         for (int i = 0; i < times; i++) {
 
-            // Create the server
-            new Thread(new Runnable() {
-                public void run() {
-                    Server server = new Server();
-                    server.createAndListenSocket();
-                }
-            }).start();
-
-
+            Thread.sleep(3000);
             // Create the client
-            new Thread(new Runnable() {
-                public void run() {
-                    Client client = new Client();
-                    client.createConnection();
-                }
-            }).start();
-
-            while(Thread.isAlive()) {
-                Thread.sleep(3000);
-            }
-
+            Client client = new Client();
+            client.createConnection();
         }
+
+        System.exit(0);
 
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws InterruptedException {
 
         // Get params from user
         Test test = new Test();
