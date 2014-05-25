@@ -22,55 +22,55 @@ public class Server {
     }
 
     public void createAndListenSocket() {
-        try {
-            socket = new DatagramSocket(port);
-            byte[] incomingData = new byte[1024 * 64];
-            while (true) {
-                DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
-                socket.receive(incomingPacket);
-                byte[] data = incomingPacket.getData();
 
-                // Simulate interplanetary communication
-                Proxy proxy = new Proxy();
+        while (true) {
+            try {
+                socket = new DatagramSocket(port);
+                byte[] incomingData = new byte[1024 * 64];
+                while (true) {
+                    DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
+                    socket.receive(incomingPacket);
+                    byte[] data = incomingPacket.getData();
 
-                byte[][] splitChunk = proxy.splitChunk(data);
-                byte[][] corruptChunk = proxy.corruptChunk(splitChunk);
-                byte[][] correctedChunk = proxy.correctChunk(corruptChunk);
-                byte[] singleChunk = proxy.mergeChunks(correctedChunk);
+                    // Simulate interplanetary communication
+                    Proxy proxy = new Proxy();
+
+                    byte[][] splitChunk = proxy.splitChunk(data);
+                    byte[][] corruptChunk = proxy.corruptChunk(splitChunk);
+                    byte[][] correctedChunk = proxy.correctChunk(corruptChunk);
+                    byte[] singleChunk = proxy.mergeChunks(correctedChunk);
 
 
-                try {
-                    ByteArrayInputStream in = new ByteArrayInputStream(singleChunk);
-                    ObjectInputStream is = new ObjectInputStream(in);
-                    fileEvent = (FileEvent) is.readObject();
-                    if (fileEvent.getStatus().equalsIgnoreCase("Error")) {
-                        System.out.println("Some issue happened while packing the data @ client side");
-                        System.exit(0);
+                    try {
+                        ByteArrayInputStream in = new ByteArrayInputStream(singleChunk);
+                        ObjectInputStream is = new ObjectInputStream(in);
+                        fileEvent = (FileEvent) is.readObject();
+                        if (fileEvent.getStatus().equalsIgnoreCase("Error")) {
+                            System.out.println("Some issue happened while packing the data @ client side");
+                            System.exit(0);
+                        }
+                    } catch (Exception e) {
+                        //e.printStackTrace();
+                        continue;
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.exit(0);
+
+                    createAndWriteFile();   // writing the file to hard disk
+                    InetAddress IPAddress = incomingPacket.getAddress();
+                    int port = incomingPacket.getPort();
+                    String reply = "Thank you for the message";
+                    byte[] replyBytea = reply.getBytes();
+                    DatagramPacket replyPacket =
+                            new DatagramPacket(replyBytea, replyBytea.length, IPAddress, port);
+                    socket.send(replyPacket);
                 }
 
-                createAndWriteFile();   // writing the file to hard disk
-                InetAddress IPAddress = incomingPacket.getAddress();
-                int port = incomingPacket.getPort();
-                String reply = "Thank you for the message";
-                byte[] replyBytea = reply.getBytes();
-                DatagramPacket replyPacket =
-                        new DatagramPacket(replyBytea, replyBytea.length, IPAddress, port);
-                socket.send(replyPacket);
-                Thread.sleep(3000);
-                System.exit(0);
-
+            } catch (SocketException e) {
+                //e.printStackTrace();
+                continue;
+            } catch (IOException e) {
+                //e.printStackTrace();
+                continue;
             }
-
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

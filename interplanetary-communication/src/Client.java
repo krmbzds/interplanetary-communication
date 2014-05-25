@@ -34,7 +34,6 @@ public class Client {
             String response = new String(incomingPacket.getData());
             System.out.println("Response from server:" + response);
             Thread.sleep(2000);
-            System.exit(0);
 
         } catch (UnknownHostException e) {
             e.printStackTrace();
